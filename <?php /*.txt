@@ -1,0 +1,235 @@
+<?php
+/*
+Plugin Name: GST Calculator India Pro
+Plugin URI: https://example.com/gst-calculator
+Description: SEO-optimized GST calculator with AdSense integration for Indian businesses.
+Version: 2.0
+Author: Your Name
+Author URI: https://example.com
+*/
+
+// Admin Settings Page
+function gst_calculator_add_admin_menu() {
+    add_options_page(
+        'GST Calculator Settings',
+        'GST Calculator',
+        'manage_options',
+        'gst-calculator-settings',
+        'gst_calculator_settings_page'
+    );
+}
+add_action('admin_menu', 'gst_calculator_add_admin_menu');
+
+function gst_calculator_settings_page() {
+    ?>
+    <div class="wrap">
+        <h2>GST Calculator Settings</h2>
+        <form method="post" action="options.php">
+            <?php
+            settings_fields('gst_calculator_settings');
+            do_settings_sections('gst_calculator_settings');
+            submit_button();
+            ?>
+        </form>
+    </div>
+    <?php
+}
+
+function gst_calculator_settings_init() {
+    register_setting('gst_calculator_settings', 'gst_calculator_adsense_settings');
+    
+    add_settings_section(
+        'gst_calculator_adsense_section',
+        'AdSense Settings',
+        'gst_calculator_adsense_section_callback',
+        'gst_calculator_settings'
+    );
+
+    add_settings_field(
+        'ad_unit_header',
+        'Header Ad Unit ID',
+        'gst_calculator_ad_unit_header_render',
+        'gst_calculator_settings',
+        'gst_calculator_adsense_section'
+    );
+
+    add_settings_field(
+        'ad_unit_footer',
+        'Footer Ad Unit ID',
+        'gst_calculator_ad_unit_footer_render',
+        'gst_calculator_settings',
+        'gst_calculator_adsense_section'
+    );
+}
+
+function gst_calculator_adsense_section_callback() {
+    echo 'Enter your Google AdSense Ad Unit IDs:';
+}
+
+function gst_calculator_ad_unit_header_render() {
+    $options = get_option('gst_calculator_adsense_settings');
+    ?>
+    <input type="text" name="gst_calculator_adsense_settings[ad_unit_header]" 
+           value="<?php echo esc_attr($options['ad_unit_header'] ?? ''); ?>">
+    <?php
+}
+
+function gst_calculator_ad_unit_footer_render() {
+    $options = get_option('gst_calculator_adsense_settings');
+    ?>
+    <input type="text" name="gst_calculator_adsense_settings[ad_unit_footer]" 
+           value="<?php echo esc_attr($options['ad_unit_footer'] ?? ''); ?>">
+    <?php
+}
+add_action('admin_init', 'gst_calculator_settings_init');
+
+// SEO Optimization Functions
+function gst_calculator_seo_meta() {
+    if (has_shortcode(get_post()->post_content, 'gst_calculator')) {
+        echo '<meta name="description" content="Calculate GST in India instantly with our professional tool. Free GST calculator with CGST/SGST breakdown and accurate tax calculations.">';
+        echo '<meta property="og:title" content="GST Calculator India | Free Online GST Calculation Tool">';
+        echo '<meta property="og:description" content="Instant GST calculator for Indian businesses with AdSense integration and SEO optimization.">';
+    }
+}
+add_action('wp_head', 'gst_calculator_seo_meta');
+
+// Enqueue optimized assets
+function gst_calculator_scripts() {
+    // CSS
+    wp_enqueue_style('gst-calculator-style', plugins_url('css/style.css', __FILE__));
+    wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
+    
+    // JS with defer
+    wp_enqueue_script('gst-calculator-script', plugins_url('js/script.js', __FILE__), array('jquery'), null, true);
+    
+    // Localize AJAX
+    wp_localize_script('gst-calculator-script', 'gstCalculator', array(
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'ajax_nonce' => wp_create_nonce('gst_calculator_nonce')
+    ));
+
+    // AdSense script
+    $adsense_settings = get_option('gst_calculator_adsense_settings');
+    if (!empty($adsense_settings['ad_unit_header']) || !empty($adsense_settings['ad_unit_footer'])) {
+        wp_enqueue_script('adsense-script', 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', array(), null, true);
+    }
+}
+add_action('wp_enqueue_scripts', 'gst_calculator_scripts');
+
+// Shortcode with Ad integration
+function gst_calculator_shortcode() {
+    $adsense_settings = get_option('gst_calculator_adsense_settings');
+    ob_start(); ?>
+    
+    <!-- Schema markup for SEO -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "GST Calculator India",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "description": "Professional GST calculator for Indian businesses",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "INR"
+        }
+    }
+    </script>
+
+    <div class="gst-calculator-container">
+        <?php if (!empty($adsense_settings['ad_unit_header'])) : ?>
+        <div class="gst-ad-container">
+            <!-- AdSense Header Ad -->
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+                 data-ad-slot="<?php echo esc_attr($adsense_settings['ad_unit_header']); ?>"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        <?php endif; ?>
+
+        <!-- Calculator UI (same as previous version) -->
+        <!-- ... (calculator HTML from previous version) ... -->
+
+        <?php if (!empty($adsense_settings['ad_unit_footer'])) : ?>
+        <div class="gst-ad-container">
+            <!-- AdSense Footer Ad -->
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+                 data-ad-slot="<?php echo esc_attr($adsense_settings['ad_unit_footer']); ?>"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        <?php endif; ?>
+    </div>
+
+    <?php
+    return ob_get_clean();
+}
+add_shortcode('gst_calculator', 'gst_calculator_shortcode');
+
+// AJAX handler remains same as previous version
+// ... css///* SEO-friendly structured layout */
+.gst-calculator-container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 25px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+}
+
+.gst-ad-container {
+    margin: 20px 0;
+    text-align: center;
+    min-height: 100px;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+/* Improved accessibility */
+.gst-input-group label {
+    clip: rect(1px, 1px, 1px, 1px);
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+}
+
+/* Performance-optimized animations */
+.gst-results {
+    transition: all 0.3s ease-out;
+}
+
+/* Print styles for better PDF/saving */
+@media print {
+    .gst-ad-container { display: none; }
+    #gst-calculate-btn { display: none; }
+    .gst-results { display: block !important; }
+}
+// Add schema.org event tracking
+function logGstCalculationEvent(amount) {
+    if (typeof window.dataLayer !== 'undefined') {
+        dataLayer.push({
+            'event': 'gst_calculation',
+            'gst_amount': amount
+        });
+    }
+}
+
+jQuery(document).ready(function($) {
+    $('#gst-calculate-btn').click(function(e) {
+        // ... existing calculation code ...
+        
+        // After successful calculation:
+        logGstCalculationEvent(response.data.gst_amount);
+    });
+});
+
